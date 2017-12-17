@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.android.memegenerator.MainActivity">
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="match_parent"
+        android:layout_height="390dp"
+        android:layout_below="@+id/Text_gora"
+        app:srcCompat="@mipmap/ic_launcher" />
+
+    <EditText
+        android:id="@+id/Text_gora"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:textColor="#f000" />
+
+    <EditText
+        android:id="@+id/Text_dol"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_above="@id/button_send"
+        android:gravity="center"
+        android:textColor="#f000" />
+
+    <Button
+        android:id="@+id/button_change"
+        android:layout_width="160dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:text="Zmień" />
+
+    <Button
+        android:id="@+id/button_send"
+        android:layout_width="160dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="Wyślij" />
+
+</RelativeLayout>
