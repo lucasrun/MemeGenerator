@@ -24,6 +24,8 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity {
 
     public int IMAGE_REQUEST = 1;
+    public String text_gora;
+    public String text_dol;
     ImageView IV;
     EditText textDol, textGora;
 
@@ -39,11 +41,11 @@ public class MainActivity extends AppCompatActivity {
 
         //text gora
         textGora = (EditText) findViewById(R.id.Text_gora);
-        String text_gora = textGora.getText().toString();
+        text_gora = textGora.getText().toString();
 
         //text dol
         textDol = (EditText) findViewById(R.id.Text_dol);
-        String text_dol = textDol.getText().toString();
+        text_dol = textDol.getText().toString();
 
         /*
         DEFINICJE PRZYCISKÓW PONIŻEJ
@@ -68,14 +70,11 @@ public class MainActivity extends AppCompatActivity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent wyslij = new Intent(Intent.ACTION_SEND);
-                wyslij.setType("text/plain");
 
                 // tworzenie folderu zapisu
                 String rootDir = Environment.getExternalStorageDirectory().getAbsolutePath();
                 File myDir = new File(rootDir + "/my_memes");
                 myDir.mkdirs();
-
 
                 // tworzenie sciezki do pliku
                 File root = Environment.getExternalStorageDirectory();
@@ -84,6 +83,12 @@ public class MainActivity extends AppCompatActivity {
                 if (!file.exists() || !file.canRead()) {
                     return;
                 }
+
+                memeImage();
+
+                // zalaczanie i wysylanie
+                Intent wyslij = new Intent(Intent.ACTION_SEND);
+                wyslij.setType("text/plain");
                 Uri uri = Uri.fromFile(file);
                 wyslij.putExtra(Intent.EXTRA_STREAM, uri);
                 startActivity(Intent.createChooser(wyslij, "Wyślij"));
@@ -91,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // przypisanie wczytanej grafiki do imageview
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -107,15 +113,15 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-
     }
 
-    public void saveImage(){
-        Bitmap src = BitmapFactory.decodeResource(getResources(), R.drawable.meme); // the original file yourimage.jpg i added in resources
+    public void memeImage() {
+
+        Bitmap src = BitmapFactory.decodeResource(getResources(), R.id.imageView1);
         Bitmap dest = Bitmap.createBitmap(src.getWidth(), src.getHeight(), Bitmap.Config.ARGB_8888);
 
-        String topText = "My top text";
-        String bottomText = "My bottom text";
+        String topText = text_gora;
+        String bottomText = text_dol;
 
         // formatowanie czcionki
         Canvas cs = new Canvas(dest);
@@ -127,19 +133,17 @@ public class MainActivity extends AppCompatActivity {
 
         // umieszczanie tekstu gornego
         float width = tPaint.measureText(topText);
-        float x_coord = (src.getWidth() - width)/2;
+        float x_coord = (src.getWidth() - width) / 2;
         cs.drawText(topText, x_coord, 100, tPaint);
 
         // umieszczanie tekstu dolnego
         width = tPaint.measureText(bottomText);
-        x_coord = (src.getWidth() - width)/2;
+        x_coord = (src.getWidth() - width) / 2;
         cs.drawText(bottomText, x_coord, 300, tPaint);
 
         try {
-            dest.compress(Bitmap.CompressFormat.JPEG, 100, new FileOutputStream(new File("/sdcard/ImageAfterAddingText.jpg")));
-            // dest is Bitmap, if you want to preview the final image, you can display it on screen also before saving
+            dest.compress(Bitmap.CompressFormat.JPEG, 100, new FileOutputStream(new File(Environment.getExternalStorageDirectory()+"/my_memes/meme.jpg")));
         } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
