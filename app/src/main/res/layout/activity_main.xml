@@ -7,42 +7,50 @@
     tools:context="com.example.android.memegenerator.MainActivity">
 
     <ImageView
-        android:id="@+id/imageView1"
+        android:id="@+id/ivImage"
         android:layout_width="match_parent"
-        android:layout_height="390dp"
-        android:layout_below="@+id/Text_gora"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/but_open"
+        android:layout_marginTop="10dp"
+        android:scaleType="fitXY"
         app:srcCompat="@mipmap/ic_launcher" />
 
     <EditText
-        android:id="@+id/Text_gora"
+        android:id="@+id/et_upper"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_alignParentTop="true"
+        android:layout_margin="10dp"
         android:gravity="center"
         android:textColor="#f000" />
 
     <EditText
-        android:id="@+id/Text_dol"
+        android:id="@+id/et_lower"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:layout_above="@+id/button_send"
+        android:layout_above="@+id/but_send"
+        android:layout_marginBottom="10dp"
         android:gravity="center"
         android:textColor="#f000" />
 
     <Button
-        android:id="@+id/button_change"
+        android:id="@+id/but_open"
         android:layout_width="160dp"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:text="Zmień" />
+        android:layout_margin="10dp"
+        android:text="Open"
+        android:textAllCaps="true" />
 
     <Button
-        android:id="@+id/button_send"
+        android:id="@+id/but_send"
         android:layout_width="160dp"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:text="Wyślij" />
+        android:layout_margin="10dp"
+        android:text="Send"
+        android:textAllCaps="true" />
 
 </RelativeLayout>
