@@ -1,71 +1,91 @@
 package com.example.android.memegenerator;
 
-import android.content.ContextWrapper;
+import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int IMAGE_REQUEST = 1;
+    private static final int MY_PERMISSION_REQUEST = 2;
     ImageView mImage;
+    View mLayout;
     Button mButtonOpen, mButtonSend;
-    EditText mTextLower, mTextUpper;
-    Drawable drawable;
-    Bitmap bitmap;
-    String mImagePath;
+    EditText mEditLower, mEditUpper;
+    TextView mTextLower, mTextUpper;
+    String mImagePath, currentImage = "";
     Uri URI;
-    File file;
-    ContextWrapper wrapper;
-    private String mTextUpperString, mTextLowerString;
+
+    public static Bitmap getScreenShot(View view) {
+        view.setDrawingCacheEnabled(true);
+        Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
+        view.setDrawingCacheEnabled(false);
+        return bitmap;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mImagePath = Environment.getExternalStorageDirectory().toString();
+        // checking permissions
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
+            } else {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
+            }
+        } else {
+            // empty here
+        }
 
+        mImagePath = Environment.getExternalStorageDirectory().toString();
         mImage = (ImageView) findViewById(R.id.ivImage);
         mImage.setImageResource(R.mipmap.ic_launcher);
+        mLayout = (View) findViewById(R.id.layout);
 
         // text upper
-        mTextUpper = (EditText) findViewById(R.id.et_upper);
-        mTextUpperString = mTextUpper.getText().toString();
+        mEditUpper = (EditText) findViewById(R.id.et_upper);
+        mTextUpper = (TextView) findViewById(R.id.tv_upper);
 
         // text lower
-        mTextLower = (EditText) findViewById(R.id.et_lower);
-        mTextLowerString = mTextLower.getText().toString();
+        mEditLower = (EditText) findViewById(R.id.et_lower);
+        mTextLower = (TextView) findViewById(R.id.tv_lower);
 
         // buttons
         mButtonOpen = (Button) findViewById(R.id.but_open);
         mButtonSend = (Button) findViewById(R.id.but_send);
 
         // method for opening gallery
-        openImage(mButtonOpen);
+        openMeme(mButtonOpen);
 
         // method for sending meme graphic
-        sendImage(mButtonSend);
+        sendMeme(mButtonSend);
     }
 
     // setting picked graphic as image
@@ -75,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
 
+            // setting link for image
             URI = data.getData();
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), URI);
@@ -87,8 +108,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSION_REQUEST: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    }
+                } else {
+                    Toast.makeText(this, "No permission granted", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }
+            return;
+        }
+    }
+
     // open image gallery
-    private void openImage(Button button) {
+    private void openMeme(Button button) {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,96 +138,60 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // send image
-    public void sendImage(Button button) {
+    public void sendMeme(Button button) {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-//                generateImage();
+                // image preparation
+                mTextUpper.setText(mEditUpper.getText().toString());
+                mTextLower.setText(mEditLower.getText().toString());
+                currentImage = "meme" + System.currentTimeMillis() + ".png";
+                Bitmap bitmap = getScreenShot(mLayout);
 
-//                saveImageInternal();
-                /* OR */
-//                saveImageExternal();
-
-                send();
-
+                // saving & sending
+                saveImage(bitmap, currentImage);
+                sendImage(currentImage);
             }
         });
     }
 
-    public void saveImageExternal() {
-        drawable = getResources().getDrawable(R.drawable.meme);
-        bitmap = ((BitmapDrawable) drawable).getBitmap();
-        file = new File(mImagePath, "meme.jpg");
-
+    /*
+     support methods
+      */
+    public void saveImage(Bitmap bitmap, String fileName) {
+        String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/meme";
+        File dir = new File(dirPath);
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        File file = new File(dirPath, fileName);
         try {
-            OutputStream stream = null;
-            stream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-            stream.flush();
-            stream.close();
-
-        } catch (IOException e) {
+            FileOutputStream fos = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+            Toast.makeText(this, "Meme saved", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
             e.printStackTrace();
+            Toast.makeText(this, "Error saving", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void saveImageInternal() {
-        drawable = getResources().getDrawable(R.drawable.meme);
-        bitmap = ((BitmapDrawable) drawable).getBitmap();
-        wrapper = new ContextWrapper(getApplicationContext());
-        file = wrapper.getDir("Images", MODE_PRIVATE);
-        file = new File(file, "meme.jpg");
+    public void sendImage(String fileName) {
+        String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/meme";
+        Uri uri = Uri.fromFile(new File(dirPath, fileName));
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_SEND);
+        intent.setType("image/*");
+
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Meme generated by MemeGenerator");
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
 
         try {
-            OutputStream stream = null;
-            stream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-            stream.flush();
-            stream.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            startActivity(Intent.createChooser(intent, "Share using"));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "No apps available for sharing", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    public void generateImage() {
-
-        Bitmap src = BitmapFactory.decodeResource(getResources(), R.id.ivImage);
-        Bitmap dest = Bitmap.createBitmap(src.getWidth(), src.getHeight(), Bitmap.Config.ARGB_8888);
-
-        // setting font
-        Canvas cs = new Canvas(dest);
-        Paint tPaint = new Paint();
-        tPaint.setTextSize(35);
-        tPaint.setColor(Color.BLUE);
-        tPaint.setStyle(Paint.Style.FILL);
-        cs.drawBitmap(src, 0f, 0f, null);
-
-        // setting upper text
-        float width = tPaint.measureText(mTextUpperString);
-        float x_coord = (src.getWidth() - width) / 2;
-        cs.drawText(mTextUpperString, x_coord, 100, tPaint);
-
-        // setting lower text
-        width = tPaint.measureText(mTextLowerString);
-        x_coord = (src.getWidth() - width) / 2;
-        cs.drawText(mTextLowerString, x_coord, 300, tPaint);
-
-        try {
-            dest.compress(Bitmap.CompressFormat.JPEG, 100, new FileOutputStream(new File(Environment.getExternalStorageDirectory() + "meme.jpg")));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void send() {
-        final Intent intent = new Intent(android.content.Intent.ACTION_SEND);
-        intent.setType("plain/text");
-        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "This meme was generated by Meme Generator");
-        if (URI != null) {
-            intent.putExtra(Intent.EXTRA_STREAM, URI);
-        }
-        this.startActivity(Intent.createChooser(intent, "Sending..."));
     }
 }
